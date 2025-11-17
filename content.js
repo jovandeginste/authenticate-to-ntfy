@@ -6,8 +6,15 @@
 const LINK_PATTERN = /^https:\/\/icts\.kuleuven\.be\/apps\/authenticator\//;
 
 // --- NTFY.SH CONFIGURATION ---
-const NTFY_TOPIC = 'Fae2Hax5EeKah0ph';
+const DEFAULT_NTFY_TOPIC = 'default-link-alerts';
 const NTFY_ICON = 'https://play-lh.googleusercontent.com/1tfPDnLuaGVet63nVDT4aT2ebarC6r_EVRHghQT17IqQg_2Yg3swfUfed2OV_SoBSFc';
+const STORAGE_KEY = 'ntfyTopic';
+
+async function getNtfyTopic() {
+  // Retrieve the stored topic, falling back to a default if nothing is found
+  const result = await browser.storage.local.get(STORAGE_KEY);
+  return result[STORAGE_KEY] || DEFAULT_NTFY_TOPIC;
+}
 
 function findTargetLink() {
   const allLinks = document.querySelectorAll('a');
@@ -19,8 +26,9 @@ function findTargetLink() {
   return null;
 }
 
-function sendNtfyNotification(linkUrl) {
-  const ntfyUrl = `https://ntfy.sh/${NTFY_TOPIC}`;
+async function sendNtfyNotification(linkUrl) {
+  const NTFY_TOPIC = await getNtfyTopic();
+  const NTFY_URL = `https://ntfy.sh/${NTFY_TOPIC}`;
 
   const headers = {
     'Title': 'KU Leuven login',
@@ -31,7 +39,7 @@ function sendNtfyNotification(linkUrl) {
     'Firebase': 'no'
   };
 
-  fetch(ntfyUrl, {
+  fetch(NTFY_URL, {
     method: 'POST',
     headers: headers,
     body: 'Please log in'
@@ -98,7 +106,7 @@ function createNtfyButton(linkUrl) {
   document.body.appendChild(button);
 }
 
-function init() {
+async function init() {
   const targetLink = findTargetLink();
   if (targetLink) {
     createNtfyButton(targetLink);
