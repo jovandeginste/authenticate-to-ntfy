@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Authenticate to Ntfy",
+  "version": "1.1",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "link-ntfy-notifier@jovandeginste",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": [
+          "websiteContent"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://idp.kuleuven.be/*",
+    "https://ntfy.sh/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://idp.kuleuven.be/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
