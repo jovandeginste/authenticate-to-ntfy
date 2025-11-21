@@ -19,12 +19,16 @@
   ],
   "host_permissions": [
     "https://idp.kuleuven.be/*",
+    "https://idp.t.icts.kuleuven.be/*",
+    "https://idp.q.icts.kuleuven.be/*",
     "https://ntfy.sh/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://idp.kuleuven.be/*"
+        "https://idp.kuleuven.be/*",
+        "https://idp.t.icts.kuleuven.be/*",
+        "https://idp.q.icts.kuleuven.be/*"
       ],
       "js": [
         "content.js"
