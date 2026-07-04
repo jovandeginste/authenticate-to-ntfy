@@ -5,15 +5,37 @@
 
 const LINK_PATTERN = /^https:\/\/icts\.kuleuven\.be\/apps\/authenticator\//;
 
-// --- NTFY.SH CONFIGURATION ---
+// --- NTFY CONFIGURATION ---
+const DEFAULT_NTFY_SERVER = 'https://ntfy.sh';
 const DEFAULT_NTFY_TOPIC = 'default-link-alerts';
 const NTFY_ICON = 'https://play-lh.googleusercontent.com/1tfPDnLuaGVet63nVDT4aT2ebarC6r_EVRHghQT17IqQg_2Yg3swfUfed2OV_SoBSFc';
-const STORAGE_KEY = 'ntfyTopic';
+const NTFY_TOPIC_STORAGE_KEY = 'ntfyTopic';
+const NTFY_SERVER_STORAGE_KEY = 'ntfyServer';
+const NTFY_USERNAME_STORAGE_KEY = 'ntfyUsername';
+const NTFY_PASSWORD_STORAGE_KEY = 'ntfyPassword';
 
-async function getNtfyTopic() {
-  // Retrieve the stored topic, falling back to a default if nothing is found
-  const result = await browser.storage.local.get(STORAGE_KEY);
-  return result[STORAGE_KEY] || DEFAULT_NTFY_TOPIC;
+async function getNtfyConfig() {
+  const result = await browser.storage.local.get([
+    NTFY_TOPIC_STORAGE_KEY,
+    NTFY_SERVER_STORAGE_KEY,
+    NTFY_USERNAME_STORAGE_KEY,
+    NTFY_PASSWORD_STORAGE_KEY
+  ]);
+
+  return {
+    topic: result[NTFY_TOPIC_STORAGE_KEY] || DEFAULT_NTFY_TOPIC,
+    server: result[NTFY_SERVER_STORAGE_KEY] || DEFAULT_NTFY_SERVER,
+    username: result[NTFY_USERNAME_STORAGE_KEY] || '',
+    password: result[NTFY_PASSWORD_STORAGE_KEY] || ''
+  };
+}
+
+function toBasicAuthHeader(username, password) {
+  if (!username || !password) {
+    return null;
+  }
+
+  return `Basic ${btoa(`${username}:${password}`)}`;
 }
 
 function findTargetLink() {
@@ -27,8 +49,8 @@ function findTargetLink() {
 }
 
 async function sendNtfyNotification(linkUrl) {
-  const NTFY_TOPIC = await getNtfyTopic();
-  const NTFY_URL = `https://ntfy.sh/${NTFY_TOPIC}`;
+  const ntfyConfig = await getNtfyConfig();
+  const ntfyUrl = `${ntfyConfig.server}/${encodeURIComponent(ntfyConfig.topic)}`;
 
   const headers = {
     'Title': 'KU Leuven login',
@@ -39,7 +61,12 @@ async function sendNtfyNotification(linkUrl) {
     'Firebase': 'no'
   };
 
-  fetch(NTFY_URL, {
+  const authHeader = toBasicAuthHeader(ntfyConfig.username, ntfyConfig.password);
+  if (authHeader) {
+    headers.Authorization = authHeader;
+  }
+
+  fetch(ntfyUrl, {
     method: 'POST',
     headers: headers,
     body: 'Please log in'
@@ -47,7 +74,7 @@ async function sendNtfyNotification(linkUrl) {
     .then(response => {
       const button = document.getElementById('ntfy-link-button');
       if (response.ok) {
-        console.log('ntfy.sh notification sent successfully!');
+        console.log('ntfy notification sent successfully!');
         if (button) {
           const originalText = button.textContent;
           button.textContent = '✅ Notified ntfy!';
@@ -58,7 +85,7 @@ async function sendNtfyNotification(linkUrl) {
           }, 3000);
         }
       } else {
-        console.error(`ntfy.sh request failed: ${response.status} ${response.statusText}`);
+        console.error(`ntfy request failed: ${response.status} ${response.statusText}`);
         if (button) {
           button.textContent = `❌ Error: ${response.status}`;
           button.style.backgroundColor = '#dc3545'; // Red
