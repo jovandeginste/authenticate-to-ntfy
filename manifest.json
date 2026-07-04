@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Authenticate to Ntfy",
-  "version": "1.4",
+  "version": "1.6",
   "browser_specific_settings": {
     "gecko": {
       "id": "link-ntfy-notifier@jovandeginste",
-      "strict_min_version": "109.0",
+      "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [
           "websiteContent"
